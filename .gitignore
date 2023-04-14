@@ -34,3 +34,6 @@
 # Datasets and Experiments
 networks/
 venv/
+
+# vscode
+.vscode
