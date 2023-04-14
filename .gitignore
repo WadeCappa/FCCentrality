@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Datasets and Experiments
+networks/
+venv/
