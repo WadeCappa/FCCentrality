@@ -1,4 +1,8 @@
-#include "data_extractor.h"
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <iterator>    
+#include "edge_list_builder.h"
 
 int main()
 {
@@ -11,6 +15,19 @@ int main()
         exit(1);
 	}
 
-    std::vector<std::vector<unsigned int>> edge_list = DataExtractor::BuildEdgeList(input);
+    EdgeListBuilder builder;
+    builder.Undirected();
+
+    std::vector<std::vector<Adjacent>> edge_list = builder.BuildEdgeList(input);
     input.close();
+
+    for (auto itr = edge_list.begin(); itr != edge_list.end(); itr++)
+    {
+        std::cout << std::distance(edge_list.begin(), itr) << ": ";
+        for (const auto & a : *itr)
+        {
+            std::cout << "(" << a.vertex << " " << a.weight << ")" << ", ";
+        }
+        std::cout << std::endl;
+    }
 }
