@@ -2,12 +2,12 @@
 #include <iostream>
 #include <fstream>
 #include <iterator>    
-#include "edge_list_builder.h"
+#include "adjacency_matrix_builder.h"
 
-int main()
+int main(int argc, char* argv[])
 {
     std::ifstream input;
-	input.open("../networks/karate.txt");
+	input.open(argv[1]);
 
     if (!input) 
     {
@@ -18,12 +18,12 @@ int main()
     EdgeListBuilder builder;
     builder.Undirected();
 
-    std::vector<std::vector<Adjacent>> edge_list = builder.BuildEdgeList(input);
+    std::vector<std::vector<Adjacent>> adjacency_matrix = builder.BuildEdgeList(input);
     input.close();
 
-    for (auto itr = edge_list.begin(); itr != edge_list.end(); itr++)
+    for (auto itr = adjacency_matrix.begin(); itr != adjacency_matrix.end(); itr++)
     {
-        std::cout << std::distance(edge_list.begin(), itr) << ": ";
+        std::cout << std::distance(adjacency_matrix.begin(), itr) << ": ";
         for (const auto & a : *itr)
         {
             std::cout << "(" << a.vertex << " " << a.weight << ")" << ", ";

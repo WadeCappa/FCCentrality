@@ -1,4 +1,4 @@
-#include "edge_list_builder.h"
+#include "adjacency_matrix_builder.h"
 
 EdgeListBuilder::EdgeListBuilder()
 {
