@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iterator>    
 #include "adjacency_matrix_builder.h"
+#include "adjacent.h"
+#include "centrality_calculator.h"
 
 int main(int argc, char* argv[])
 {
@@ -30,4 +32,13 @@ int main(int argc, char* argv[])
         }
         std::cout << std::endl;
     }
+
+    std::vector<long double> closeness = CentralityCalculator::DEBUG_CalculateCloseness(adjacency_matrix);
+
+    for (auto itr = closeness.begin(); itr != closeness.end(); itr++)
+    {
+        std::cout << std::distance(closeness.begin(), itr) << ": " << *itr << std::endl;
+    }
+
+    
 }

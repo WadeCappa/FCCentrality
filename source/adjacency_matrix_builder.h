@@ -2,14 +2,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "adjacent.h"
 
 #ifndef DATAEXTRACTOR_H
 #define DATAEXTRACTOR_H
-
-typedef struct adjacent {
-    size_t vertex;
-    double weight;
-} Adjacent;
 
 class EdgeListBuilder // TODO: Should be called edge_list builder, should account for undirected vs directed, weighted vs unweighted
 {
