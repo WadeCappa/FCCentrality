@@ -8,6 +8,9 @@
 #include <numeric>
 #include <bits/stdc++.h>
 #include <unordered_set>
+#include <cmath>
+#include <omp.h>
+
 #include "adjacent.h"
 
 #ifndef FCCLOSENESS_H

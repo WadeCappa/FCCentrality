@@ -7,10 +7,9 @@ std::vector<long double> CentralityCalculator::DEBUG_CalculateCloseness(const st
         unsigned int distance;
     } QueueVertex;
 
-    std::vector<std::vector<unsigned>> closeness_scores(
-        adjacency_matrix.size(), std::vector<unsigned>(adjacency_matrix.size(), 0)
-    );
+    std::vector<long unsigned int> closeness_scores(adjacency_matrix.size(), 0);
 
+    #pragma omp parallel for
     for (size_t v = 0; v < adjacency_matrix.size(); v++)
     {
         std::queue<QueueVertex> vertex_queue;
@@ -23,7 +22,7 @@ std::vector<long double> CentralityCalculator::DEBUG_CalculateCloseness(const st
             QueueVertex next = vertex_queue.front();
             vertex_queue.pop();
 
-            closeness_scores[v][next.vertex] = next.distance;
+            closeness_scores[v] += next.distance;
 
             for (const auto & u : adjacency_matrix[next.vertex])
             {
@@ -38,9 +37,11 @@ std::vector<long double> CentralityCalculator::DEBUG_CalculateCloseness(const st
 
     std::vector<long double> res(adjacency_matrix.size(), 0);
 
+    #pragma omp parallel for
     for (size_t v = 0; v < closeness_scores.size(); v++)
     {
-        res[v] = (long double)(adjacency_matrix.size() - 1) / (long double)std::accumulate(closeness_scores[v].begin(), closeness_scores[v].end(), 0);
+        long double normalized_closeness = (long double)(adjacency_matrix.size() - 1) / (long double)closeness_scores[v];
+        res[v] = std::isinf(normalized_closeness) ? 0 : normalized_closeness;
     }
 
     return res;
