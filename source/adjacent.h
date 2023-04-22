@@ -5,7 +5,7 @@
 
 typedef struct adjacent {
     size_t vertex;
-    double weight;
+    unsigned int weight;
 } Adjacent;
 
 #endif

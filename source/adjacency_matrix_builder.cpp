@@ -9,7 +9,7 @@ void EdgeListBuilder::AddEdge(
     std::vector<std::vector<Adjacent>>& list, 
     const size_t start, 
     const size_t destination, 
-    const double weight
+    const unsigned int weight
 )
 {
     if (list.size() <= start)
