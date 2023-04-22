@@ -26,8 +26,8 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
 
     public:
         CentralityCalculator(const std::vector<std::vector<Adjacent>>& adjacency_matrix);
-        std::vector<long double> FlowCloseness();
-        std::vector<long double> FC_Closeness();
+        std::vector<unsigned int> FlowCloseness();
+        std::vector<unsigned int> FC_Closeness();
 };
 
 #endif

@@ -7,14 +7,14 @@ CentralityCalculator::CentralityCalculator(const std::vector<std::vector<Adjacen
 {
 }
 
-std::vector<long double> CentralityCalculator::FlowCloseness()
+std::vector<unsigned int> CentralityCalculator::FlowCloseness()
 {
     typedef struct queueVertex {
         size_t vertex;
         unsigned int capacity;
     } QueueVertex;
 
-    std::vector<long unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
+    std::vector<unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
 
     #pragma omp parallel for
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
@@ -26,63 +26,16 @@ std::vector<long double> CentralityCalculator::FlowCloseness()
             unsigned int res = this->GetFlowCloseness(v, u, INT_MAX, std::unordered_set<size_t>(), local_matrix);
             closeness_scores[v] += res;
             closeness_scores[u] += res;
-            // std::queue<QueueVertex> vertex_queue;
-            // std::unordered_set<size_t> seen;
-            // vertex_queue.push({v, INT_MAX});
-            // seen.insert(v);
-
-            // while(!vertex_queue.empty())
-            // {
-            //     QueueVertex next = vertex_queue.front();
-            //     vertex_queue.pop();
-
-            //     if (next.vertex == u)
-            //     {
-            //         closeness_scores[v] += next.capacity;
-            //         closeness_scores[u] += next.capacity;
-            //         std::cout << "plus " << next.capacity << " to vertex " << v << " and " << u << std::endl;
-            //     }           
-
-            //     else 
-            //     {
-            //         for (const auto & k : this->adjacency_matrix[next.vertex])
-            //         {
-            //             vertex_queue.push({k.vertex, std::min(next.capacity, k.weight)});
-            //             seen.insert(k.vertex);
-            //         }
-            //     }
-            // }
-            for (const auto & e: closeness_scores)
-            {
-                std::cout << e << ", ";
-            }
-            std::cout << "::" << std::endl;
         }
     }
 
-    // std::vector<long double> res(adjacency_matrix.size(), 0);
-    std::vector<long double> res;
-
-    for (const auto & v : closeness_scores)
-    {
-        res.push_back((long double)v);
-    }
-
-    // #pragma omp parallel for
-    // for (size_t v = 0; v < closeness_scores.size(); v++)
-    // {
-    //     long double normalized_closeness = (long double)(adjacency_matrix.size() - 1) / (long double)closeness_scores[v];
-    //     res[v] = std::isinf(normalized_closeness) ? 0 : normalized_closeness;
-    // }
-
-    return res;
+    return closeness_scores;
 }
 
 
-std::vector<long double> CentralityCalculator::FC_Closeness()
+std::vector<unsigned int> CentralityCalculator::FC_Closeness()
 {
-    std::vector<long double> res; 
-    // distance to cost, or cost to distance. Maximize the flow (distance), minimize the cost (edge weights)
+    std::vector<unsigned int> res; 
     std::unordered_map<int, int> nondominating_vector;
 
     return res;
@@ -97,8 +50,6 @@ unsigned int CentralityCalculator::GetFlowCloseness(
     std::vector<std::vector<Adjacent>>& local_matrix
 )
 {
-    // std::cout << v << ", " << u << ", " << capacity << ", " << std::endl;
-
     if (v == u || capacity <= 0)
         return capacity;
 
