@@ -37,8 +37,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
         std::unordered_set<size_t> seen;
     } QueueVertex;
 
-    std::vector<std::unordered_map<unsigned int, unsigned int>> closeness_scores(
-        this->adjacency_matrix.size(), std::unordered_map<unsigned int, unsigned int>() // map flow -> cost
+    std::vector<FCVector> closeness_scores(
+        this->adjacency_matrix.size(), FCVector(0, 0) // map flow -> cost
     );
 
     #pragma omp parallel for
@@ -48,16 +48,10 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
         {
             // run bfs
             std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
-            std::vector<FCVector*> path_scores;
+            FCVector path_vector(0,0);
 
             std::queue<QueueVertex> q;
-            QueueVertex start_element;
-            // start_element.vertex = v;
-            // start_element.capacity = INT_MAX;
-            // start_element.distance = 0;
-
-            start_element = {v, INT_MAX, 0, std::unordered_set<size_t>()};
-            q.push(start_element); // start vertex;
+            q.push({v, INT_MAX, 0, std::unordered_set<size_t>()}); // start vertex;
 
             while (!q.empty())
             {
@@ -66,7 +60,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
                 if (k.vertex == u)
                 {
-                    path_scores.push_back(new FCVector(k.capacity, k.distance));
+                    FCVector temp(k.capacity, k.distance);
+                    path_vector.Combine(temp);
                 }
                 else if (k.capacity > 0)
                 {
@@ -77,31 +72,23 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                         {
                             unsigned int new_capacity = std::min(k.capacity, p.weight);
                             p.weight -= new_capacity;
-                            QueueVertex next_element;
-                            // next_element.vertex = p.vertex;
-                            // next_element.capacity = new_capacity;
-                            // next_element.distance = k.distance + 1; 
-                            // next_element.seen = k.seen;
-                            next_element = {p.vertex, new_capacity, k.distance + 1, k.seen};
-                            q.push(next_element);
+                            q.push({p.vertex, new_capacity, k.distance + 1, k.seen});
                         }
                     }
                 }
             }
 
-            std::cout << "between " << v << " and " << u << std::endl;
-            FCVector* vector_res = new FCVector(0,0);
-            for (auto & p : path_scores)
-            {
-                vector_res->Combine(p->GetFlowCost());
-                delete p;
-            }
-
-            vector_res->DEBUG_Display();
+            closeness_scores[v].Combine(path_vector);
+            closeness_scores[u].Combine(path_vector);
         }
     }
 
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
+
+    for (const auto & e : closeness_scores)
+    {
+        res.push_back(e.BuildNDVector());
+    }
 
     return res;
 }
@@ -128,35 +115,6 @@ unsigned int CentralityCalculator::GetFlowCloseness(
             unsigned int new_capacity = std::min(capacity, k.weight);
             k.weight -= new_capacity;
             res += this->GetFlowCloseness(k.vertex, u, new_capacity, seen, local_matrix);
-        }
-    }
-
-    return res;
-}
-
-FCVector* CentralityCalculator::FCRecusive(
-    size_t v, // current vertex
-    size_t u, // end point
-    unsigned int capacity, 
-    unsigned int distance,
-    std::unordered_set<size_t> seen,
-    std::vector<std::vector<Adjacent>>& local_matrix
-)
-{
-    if (v == u || capacity <= 0)
-        return new FCVector(capacity, distance);
-
-    seen.insert(v);
-
-    FCVector* res = new FCVector(0, 0);
-    for (auto & k : local_matrix[v])
-    {
-        if (seen.find(k.vertex) == seen.end())
-        {
-            unsigned int new_capacity = std::min(capacity, k.weight);
-            k.weight -= new_capacity;
-            FCVector* local_res = this->FCRecusive(k.vertex, u, new_capacity, distance + 1, seen, local_matrix);
-
         }
     }
 

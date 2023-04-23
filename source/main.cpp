@@ -44,18 +44,14 @@ int main(int argc, char* argv[])
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     std::cout << duration.count() << std::endl;
 
-    size_t bestVertex = 0;
-    unsigned int bestScore = 0;
 
     for (auto itr = closeness.begin(); itr != closeness.end(); itr++)
     {
-        // if (*itr > bestScore )
-        // {
-        //     bestVertex = std::distance(closeness.begin(), itr);
-        //     bestScore = *itr;
-        // }
-        // std::cout << std::distance(closeness.begin(), itr) << ": " << *itr << std::endl;
+        std::cout << "vertex " << std::distance(closeness.begin(), itr) << ": ";
+        for (const auto & e : *itr)
+        {
+             std::cout << "(" << e.first << "," << e.second << ")" << ", ";
+        }        
+        std::cout << std::endl;
     }
-
-    std::cout << bestVertex << " -> " << bestScore << std::endl;
 }

@@ -24,7 +24,6 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
         const std::vector<std::vector<Adjacent>>& adjacency_matrix;
 
         unsigned int GetFlowCloseness(size_t v, size_t u, unsigned int capacity, std::unordered_set<size_t> seen, std::vector<std::vector<Adjacent>>& adjacency_matrix);
-        FCVector* FCRecusive(size_t v, size_t u, unsigned int capacity, unsigned int distance, std::unordered_set<size_t> seen, std::vector<std::vector<Adjacent>>& adjacency_matrix);
 
     public:
         CentralityCalculator(const std::vector<std::vector<Adjacent>>& adjacency_matrix);
