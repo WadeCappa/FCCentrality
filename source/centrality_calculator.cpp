@@ -1,46 +1,25 @@
 #include "centrality_calculator.h"
 
-        
+typedef struct queueVertex {
+    size_t vertex;
+    unsigned int capacity;
+    unsigned int distance;
+    std::unordered_set<size_t> seen;
+    bool target;
+} QueueVertex;
         
 CentralityCalculator::CentralityCalculator(const std::vector<std::vector<Adjacent>>& adjacency_matrix)
     : adjacency_matrix(adjacency_matrix)
 {
 }
 
-std::vector<unsigned int> CentralityCalculator::FlowCloseness()
-{
-    std::vector<unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
-
-    #pragma omp parallel for
-    for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
-    {
-        for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
-        {
-            std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
-
-            unsigned int res = this->GetFlowCloseness(v, u, INT_MAX, std::unordered_set<size_t>(), local_matrix);
-            closeness_scores[v] += res;
-            closeness_scores[u] += res;
-        }
-    }
-
-    return closeness_scores;
-}
-
-
 std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FC_Closeness()
 {
-    typedef struct queueVertex {
-        size_t vertex;
-        unsigned int capacity;
-        unsigned int distance;
-        std::unordered_set<size_t> seen;
-    } QueueVertex;
-
     std::vector<FCVector> closeness_scores(
         this->adjacency_matrix.size(), FCVector(0, 0) // map flow -> cost
     );
 
+    // TODO: race conditions are possible here!! Fix
     #pragma omp parallel for
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
     {
@@ -48,7 +27,6 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
         {
             // run bfs
             std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
-            FCVector path_vector(0,0);
 
             std::queue<QueueVertex> q;
             q.push({v, INT_MAX, 0, std::unordered_set<size_t>()}); // start vertex;
@@ -61,7 +39,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                 if (k.vertex == u)
                 {
                     FCVector temp(k.capacity, k.distance);
-                    path_vector.Combine(temp);
+                    closeness_scores[v].Combine(temp);
+                    closeness_scores[u].Combine(temp);
                 }
                 else if (k.capacity > 0)
                 {
@@ -77,9 +56,6 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                     }
                 }
             }
-
-            closeness_scores[v].Combine(path_vector);
-            closeness_scores[u].Combine(path_vector);
         }
     }
 
@@ -93,6 +69,170 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
     return res;
 }
 
+std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FC_Betweenness()
+{
+    std::vector<FCVector> closeness_scores(
+        this->adjacency_matrix.size(), FCVector(0, 0) // map flow -> cost
+    );
+
+    // TODO: race conditions are possible here!! Fix
+    #pragma omp parallel for
+    for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
+    {
+        FCVector target_betweenness(0, 0);
+
+        for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
+        {
+            if (v == target)
+                continue;
+
+            for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
+            {
+                if (u == target || u == v)
+                    continue;
+
+                // run bfs
+                std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+
+                std::queue<QueueVertex> q;
+                q.push({v, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
+
+                while (!q.empty())
+                {
+                    QueueVertex k = q.front();
+                    q.pop();
+
+                    if (k.vertex == target)
+                        k.target = true;
+
+                    if (k.vertex == u && k.target)
+                    {
+                        FCVector temp(k.capacity, k.distance);
+                        temp.DEBUG_Display();
+                        target_betweenness.Combine(temp);
+                    }
+                    else if (k.capacity > 0)
+                    {
+                        k.seen.insert(k.vertex);
+                        for (auto & p : local_matrix[k.vertex])
+                        {
+                            if (k.seen.find(p.vertex) == k.seen.end())
+                            {
+                                unsigned int new_capacity = std::min(k.capacity, p.weight);
+                                p.weight -= new_capacity;
+                                q.push({p.vertex, new_capacity, k.distance + 1, k.seen, k.target});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        target_betweenness.DEBUG_Display();
+
+        closeness_scores[target].Combine(target_betweenness);
+    }
+
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
+
+    for (const auto & e : closeness_scores)
+    {
+        res.push_back(e.BuildNDVector());
+    }
+
+    return res;
+}
+
+std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
+{
+    std::vector<unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
+
+    // TODO: race conditions are possible here!! Fix
+    #pragma omp parallel for
+    for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
+    {
+        for (size_t source = 0; source < this->adjacency_matrix.size(); source++)
+        {
+            if (source == target)
+                continue;
+            
+            for (size_t sink = source + 1; sink < this->adjacency_matrix.size(); sink++)
+            {
+                if (sink == target)
+                    continue;
+
+                // run bfs, traversals that end up at taget are held for later
+                // after bfs, do bfs again with only target nodes
+
+                std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+                std::queue<QueueVertex> q;
+                std::queue<QueueVertex> target_q;
+                q.push({source, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
+
+                while (!q.empty())
+                {
+                    QueueVertex k = q.front();
+                    q.pop();
+
+                    if (k.vertex == target && k.target == false)
+                    {
+                        k.target = true;
+                        target_q.push(k);
+                    }
+                    else
+                    {
+                        if (k.vertex == sink && k.target == true)
+                        {
+                            closeness_scores[target] += k.capacity;
+                        }
+                        else if (k.capacity > 0)
+                        {
+                            k.seen.insert(k.vertex);
+                            for (auto & p : local_matrix[k.vertex])
+                            {
+                                if (k.seen.find(p.vertex) == k.seen.end())
+                                {
+                                    unsigned int new_capacity = std::min(k.capacity, p.weight);
+                                    p.weight -= new_capacity;
+                                    q.push({p.vertex, new_capacity, k.distance + 1, k.seen, k.target});
+                                }
+                            }
+                        }
+                    }
+
+                    if (q.empty())
+                    {
+                        q = target_q;
+                        target_q = std::queue<QueueVertex>();
+                    }
+                }
+            }
+        }
+    }
+
+    return closeness_scores;
+}
+
+std::vector<unsigned int> CentralityCalculator::FlowCloseness()
+{
+    std::vector<unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
+
+    // TODO: race conditions are possible here!! Fix
+    #pragma omp parallel for
+    for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
+    {
+        for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
+        {
+            std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+
+            unsigned int res = this->GetFlowCloseness(v, u, INT_MAX, std::unordered_set<size_t>(), local_matrix);
+            closeness_scores[v] += res;
+            closeness_scores[u] += res;
+        }
+    }
+
+    return closeness_scores;
+}
 
 unsigned int CentralityCalculator::GetFlowCloseness(
     size_t v, // current vertex
