@@ -13,6 +13,7 @@
 #include <omp.h>
 
 #include "adjacent.h"
+#include "fc_vector.h"
 
 #ifndef FCCLOSENESS_H
 #define FCCLOSENESS_H
@@ -23,11 +24,12 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
         const std::vector<std::vector<Adjacent>>& adjacency_matrix;
 
         unsigned int GetFlowCloseness(size_t v, size_t u, unsigned int capacity, std::unordered_set<size_t> seen, std::vector<std::vector<Adjacent>>& adjacency_matrix);
+        FCVector* FCRecusive(size_t v, size_t u, unsigned int capacity, unsigned int distance, std::unordered_set<size_t> seen, std::vector<std::vector<Adjacent>>& adjacency_matrix);
 
     public:
         CentralityCalculator(const std::vector<std::vector<Adjacent>>& adjacency_matrix);
         std::vector<unsigned int> FlowCloseness();
-        std::vector<unsigned int> FC_Closeness();
+        std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FC_Closeness();
 };
 
 #endif

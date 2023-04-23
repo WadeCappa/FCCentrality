@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 
     auto start = std::chrono::high_resolution_clock::now();
     CentralityCalculator calculator(adjacency_matrix);
-    std::vector<unsigned int> closeness = calculator.FlowCloseness();
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FC_Closeness();
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     std::cout << duration.count() << std::endl;
@@ -49,12 +49,12 @@ int main(int argc, char* argv[])
 
     for (auto itr = closeness.begin(); itr != closeness.end(); itr++)
     {
-        if (*itr > bestScore )
-        {
-            bestVertex = std::distance(closeness.begin(), itr);
-            bestScore = *itr;
-        }
-        std::cout << std::distance(closeness.begin(), itr) << ": " << *itr << std::endl;
+        // if (*itr > bestScore )
+        // {
+        //     bestVertex = std::distance(closeness.begin(), itr);
+        //     bestScore = *itr;
+        // }
+        // std::cout << std::distance(closeness.begin(), itr) << ": " << *itr << std::endl;
     }
 
     std::cout << bestVertex << " -> " << bestScore << std::endl;
