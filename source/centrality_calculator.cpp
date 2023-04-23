@@ -79,58 +79,64 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
     {
-        FCVector target_betweenness(0, 0);
-
-        for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
+        for (size_t source = 0; source < this->adjacency_matrix.size(); source++)
         {
-            if (v == target)
+            if (source == target)
                 continue;
 
-            for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
+            for (size_t sink = source + 1; sink < this->adjacency_matrix.size(); sink++)
             {
-                if (u == target || u == v)
+                if (sink == target)
                     continue;
 
-                // run bfs
-                std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+                // run bfs, traversals that end up at taget are held for later
+                // after bfs, do bfs again with only target nodes
 
+                std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
                 std::queue<QueueVertex> q;
-                q.push({v, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
+                std::queue<QueueVertex> target_q;
+                q.push({source, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
 
                 while (!q.empty())
                 {
                     QueueVertex k = q.front();
                     q.pop();
 
-                    if (k.vertex == target)
+                    if (k.vertex == target && k.target == false)
+                    {
                         k.target = true;
-
-                    if (k.vertex == u && k.target)
-                    {
-                        FCVector temp(k.capacity, k.distance);
-                        temp.DEBUG_Display();
-                        target_betweenness.Combine(temp);
+                        target_q.push(k);
                     }
-                    else if (k.capacity > 0)
+                    else
                     {
-                        k.seen.insert(k.vertex);
-                        for (auto & p : local_matrix[k.vertex])
+                        if (k.vertex == sink && k.target == true)
                         {
-                            if (k.seen.find(p.vertex) == k.seen.end())
+                            FCVector temp(k.capacity, k.distance);
+                            closeness_scores[target].Combine(temp);
+                        }
+                        else if (k.capacity > 0)
+                        {
+                            k.seen.insert(k.vertex);
+                            for (auto & p : local_matrix[k.vertex])
                             {
-                                unsigned int new_capacity = std::min(k.capacity, p.weight);
-                                p.weight -= new_capacity;
-                                q.push({p.vertex, new_capacity, k.distance + 1, k.seen, k.target});
+                                if (k.seen.find(p.vertex) == k.seen.end())
+                                {
+                                    unsigned int new_capacity = std::min(k.capacity, p.weight);
+                                    p.weight -= new_capacity;
+                                    q.push({p.vertex, new_capacity, k.distance + 1, k.seen, k.target});
+                                }
                             }
                         }
+                    }
+
+                    if (q.empty())
+                    {
+                        q = target_q;
+                        target_q = std::queue<QueueVertex>();
                     }
                 }
             }
         }
-
-        target_betweenness.DEBUG_Display();
-
-        closeness_scores[target].Combine(target_betweenness);
     }
 
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
