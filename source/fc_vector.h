@@ -17,11 +17,14 @@ class FCVector
         std::map<unsigned int, unsigned int> flow_cost;
 
     public:
+        FCVector();
         FCVector(unsigned int capacity, unsigned int cost);
         std::map<unsigned int, unsigned int> GetFlowCost() const;
         void DEBUG_Display() const;
         void Combine(const FCVector& vector);
         std::vector<std::pair<unsigned int, unsigned int>> BuildNDVector() const;
+
+        FCVector& operator+(const FCVector& v);
 };
 
 #endif

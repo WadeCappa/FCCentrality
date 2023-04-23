@@ -15,11 +15,8 @@ CentralityCalculator::CentralityCalculator(const std::vector<std::vector<Adjacen
 
 std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FC_Closeness()
 {
-    std::vector<FCVector> closeness_scores(
-        this->adjacency_matrix.size(), FCVector(0, 0) // map flow -> cost
-    );
+    NonDominatedVectors<FCVector> closeness_scores(this->adjacency_matrix.size());
 
-    // TODO: race conditions are possible here!! Fix
     #pragma omp parallel for
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
     {
@@ -39,8 +36,9 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                 if (k.vertex == u)
                 {
                     FCVector temp(k.capacity, k.distance);
-                    closeness_scores[v].Combine(temp);
-                    closeness_scores[u].Combine(temp);
+
+                    closeness_scores.Update(v, temp);
+                    closeness_scores.Update(u, temp);
                 }
                 else if (k.capacity > 0)
                 {
@@ -61,7 +59,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
 
-    for (const auto & e : closeness_scores)
+    for (const auto & e : closeness_scores.Convert())
     {
         res.push_back(e.BuildNDVector());
     }
@@ -71,11 +69,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
 std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FC_Betweenness()
 {
-    std::vector<FCVector> closeness_scores(
-        this->adjacency_matrix.size(), FCVector(0, 0) // map flow -> cost
-    );
+    NonDominatedVectors<FCVector> betweenness_scores(this->adjacency_matrix.size());
 
-    // TODO: race conditions are possible here!! Fix
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
     {
@@ -88,9 +83,6 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
             {
                 if (sink == target)
                     continue;
-
-                // run bfs, traversals that end up at taget are held for later
-                // after bfs, do bfs again with only target nodes
 
                 std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
                 std::queue<QueueVertex> q;
@@ -112,7 +104,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                         if (k.vertex == sink && k.target == true)
                         {
                             FCVector temp(k.capacity, k.distance);
-                            closeness_scores[target].Combine(temp);
+                            betweenness_scores.Update(target, temp);
                         }
                         else if (k.capacity > 0)
                         {
@@ -141,7 +133,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
 
-    for (const auto & e : closeness_scores)
+    for (const auto & e : betweenness_scores.Convert())
     {
         res.push_back(e.BuildNDVector());
     }
@@ -151,9 +143,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
 std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
 {
-    std::vector<unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
+    NonDominatedVectors<unsigned int> betweenness_scores(this->adjacency_matrix.size());
 
-    // TODO: race conditions are possible here!! Fix
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
     {
@@ -166,9 +157,6 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
             {
                 if (sink == target)
                     continue;
-
-                // run bfs, traversals that end up at taget are held for later
-                // after bfs, do bfs again with only target nodes
 
                 std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
                 std::queue<QueueVertex> q;
@@ -189,7 +177,7 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
                     {
                         if (k.vertex == sink && k.target == true)
                         {
-                            closeness_scores[target] += k.capacity;
+                            betweenness_scores.Update(target, k.capacity);
                         }
                         else if (k.capacity > 0)
                         {
@@ -216,14 +204,13 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
         }
     }
 
-    return closeness_scores;
+    return betweenness_scores.Convert();
 }
 
 std::vector<unsigned int> CentralityCalculator::FlowCloseness()
 {
-    std::vector<unsigned int> closeness_scores(this->adjacency_matrix.size(), 0);
+    NonDominatedVectors<unsigned int> closeness_scores(this->adjacency_matrix.size());
 
-    // TODO: race conditions are possible here!! Fix
     #pragma omp parallel for
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
     {
@@ -232,12 +219,12 @@ std::vector<unsigned int> CentralityCalculator::FlowCloseness()
             std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
 
             unsigned int res = this->GetFlowCloseness(v, u, INT_MAX, std::unordered_set<size_t>(), local_matrix);
-            closeness_scores[v] += res;
-            closeness_scores[u] += res;
+            closeness_scores.Update(v, res);
+            closeness_scores.Update(u, res);
         }
     }
 
-    return closeness_scores;
+    return closeness_scores.Convert();
 }
 
 unsigned int CentralityCalculator::GetFlowCloseness(

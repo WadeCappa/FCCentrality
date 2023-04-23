@@ -37,8 +37,9 @@ int main(int argc, char* argv[])
     //     std::cout << std::endl;
     // }
 
-    auto start = std::chrono::high_resolution_clock::now();
     CentralityCalculator calculator(adjacency_matrix);
+
+    auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FC_Betweenness();
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
@@ -55,8 +56,12 @@ int main(int argc, char* argv[])
         std::cout << std::endl;
     }
 
-
+    start = std::chrono::high_resolution_clock::now();
     std::vector<unsigned int> flow_betweenness = calculator.FlowBetweenness();
+    stop = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    std::cout << duration.count() << std::endl;
+
     for (size_t i = 0; i < flow_betweenness.size(); i++)
     {
         std::cout << i << ": " << flow_betweenness[i] << std::endl;

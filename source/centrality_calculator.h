@@ -11,9 +11,11 @@
 #include <unordered_set>
 #include <cmath>
 #include <omp.h>
+#include <mutex>
 
 #include "adjacent.h"
 #include "fc_vector.h"
+#include "non_dominated_vectors.h"
 
 #ifndef FCCLOSENESS_H
 #define FCCLOSENESS_H

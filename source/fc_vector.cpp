@@ -1,5 +1,10 @@
 #include "fc_vector.h"
 
+FCVector::FCVector()
+{
+    this->flow_cost[0] = 0;
+}
+
 FCVector::FCVector(unsigned int capacity, unsigned int cost)
 {
     for (unsigned int i = 0; i <= capacity; i++)
@@ -23,11 +28,19 @@ std::map<unsigned int, unsigned int> FCVector::GetFlowCost() const
     return this->flow_cost;
 }
 
-void FCVector::Combine(const FCVector& path_vector)
+std::vector<std::pair<unsigned int, unsigned int>> FCVector::BuildNDVector() const
+{
+    std::vector<std::pair<unsigned int, unsigned int>> nd_res(this->flow_cost.begin(), this->flow_cost.end());
+    std::reverse(nd_res.begin(), nd_res.end());
+    return nd_res;
+}
+
+
+FCVector& FCVector::operator+(const FCVector& v)
 {
     std::map<unsigned int, unsigned int> new_cost_flow;
 
-    for (const auto & p : path_vector.GetFlowCost())
+    for (const auto & p : v.GetFlowCost())
     {
         for (const auto & q : this->flow_cost)
         {
@@ -40,12 +53,6 @@ void FCVector::Combine(const FCVector& path_vector)
     }
 
     this->flow_cost = new_cost_flow;
-}
 
-
-std::vector<std::pair<unsigned int, unsigned int>> FCVector::BuildNDVector() const
-{
-    std::vector<std::pair<unsigned int, unsigned int>> nd_res(this->flow_cost.begin(), this->flow_cost.end());
-    std::reverse(nd_res.begin(), nd_res.end());
-    return nd_res;
+    return *this;
 }
