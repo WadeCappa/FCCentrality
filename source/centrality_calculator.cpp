@@ -71,23 +71,6 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 {
     NonDominatedVectors<FCVector> betweenness_scores(this->adjacency_matrix.size());
 
-    FCVector e = this->SolveMaxFlow(this->adjacency_matrix, 1, 5);
-
-    for (const auto & r : e.BuildNDVector())
-    {
-        std::cout << "(" << r.first << "," << r.second << "), ";
-    }
-    std::cout << std::endl;
-
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
-
-    for (const auto & e : betweenness_scores.Convert())
-    {
-        res.push_back(e.BuildNDVector());
-    }
-
-    return res;
-
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
     {
@@ -101,59 +84,19 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                 if (sink == target)
                     continue;
 
-                std::vector<std::vector<Edge>> local_matrix = this->adjacency_matrix;
-                std::queue<QueueVertex> q;
-                std::queue<QueueVertex> target_q;
-                q.push({source, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
-
-                while (!q.empty())
-                {
-                    QueueVertex k = q.front();
-                    q.pop();
-
-                    if (k.vertex == target && k.target == false)
-                    {
-                        k.target = true;
-                        target_q.push(k);
-                    }
-                    else
-                    {
-                        if (k.vertex == sink && k.target == true)
-                        {
-                            FCVector temp(k.capacity, k.distance);
-                            betweenness_scores.Update(target, temp);
-                        }
-                        else if (k.capacity > 0)
-                        {
-                            k.seen.insert(k.vertex);
-                            for (auto & p : local_matrix[k.vertex])
-                            {
-                                if (k.seen.find(p.target) == k.seen.end())
-                                {
-                                    unsigned int new_capacity = std::min(k.capacity, p.capacity);
-                                    p.capacity -= new_capacity;
-                                    q.push({p.target, new_capacity, k.distance + 1, k.seen, k.target});
-                                }
-                            }
-                        }
-                    }
-
-                    if (q.empty())
-                    {
-                        q = target_q;
-                        target_q = std::queue<QueueVertex>();
-                    }
-                }
+                auto copy = this->adjacency_matrix;
+                FCVector raw_score = this->SolveMaxFlow(copy, source, sink, target);
+                betweenness_scores.Update(target, raw_score);
             }
         }
     }
 
-    // std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
 
-    // for (const auto & e : betweenness_scores.Convert())
-    // {
-    //     res.push_back(e.BuildNDVector());
-    // }
+    for (const auto & e : betweenness_scores.Convert())
+    {
+        res.push_back(e.BuildNDVector());
+    }
 
     return res;
 }
@@ -302,13 +245,15 @@ std::vector<std::vector<DualCost>> CentralityCalculator::SolveForDistance(const 
 
 
 // Edmonds–Karp algorithm
+// TODO: There is a bug here, shows up when traversing the network from 1 to 5. Fix this then you are golden
 FCVector CentralityCalculator::SolveMaxFlow(
-    std::vector<std::vector<Edge>> local_matrix, 
+    std::vector<std::vector<Edge>>& local_matrix, 
     size_t source, 
-    size_t sink
+    size_t sink,
+    size_t target
 )
 {
-    FCVector res(0,0);
+    FCVector label(0,0);
     unsigned int flow = 0;
 
     while (true)
@@ -328,7 +273,7 @@ FCVector CentralityCalculator::SolveMaxFlow(
             for (size_t i = 0; i < local_matrix[current].size(); i++)
             {
                 Edge e = local_matrix[current][i];
-                if (seen.find(e.target) == seen.end() && e.target != source && e.capacity > e.flow)
+                if (seen.find(e.target) == seen.end() && e.target != source && e.capacity > e.flow && e.target != target)
                 {
                     path[e.target] = std::make_pair(current, i);
                     seen.insert(e.target);
@@ -340,25 +285,30 @@ FCVector CentralityCalculator::SolveMaxFlow(
         if (seen.find(sink) != seen.end())
         {
             unsigned int path_flow = INT_MAX;
+            unsigned int distance = 0;
             for (size_t i = sink; i >= 0 && i < local_matrix.size() && path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
             {
                 Edge edge = local_matrix[path[i].first][path[i].second];
                 path_flow = std::min(path_flow, edge.capacity - edge.flow);
+                distance++;
             }
 
             for (size_t i = sink; i >= 0 && i < local_matrix.size() && path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
             {
                 Edge& edge = local_matrix[path[i].first][path[i].second];
-                // Edge& reverse_edge = local_matrix[path[i].second][path[i].first];
                 edge.flow = edge.flow + path_flow;
-                // reverse_edge.flow = reverse_edge.flow + path_flow;
             }
+
             flow = flow + path_flow;
+            FCVector temp(flow, distance);
+            label.Combine(temp);
         }
         else
         {
-            std::cout << flow << std::endl;
-            return res;
+            if (target == -1)
+                return label;
+            else 
+                return this->SolveMaxFlow(local_matrix, source, sink, -1);
         }
     }
 }
