@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include <stack>
 #include <numeric>
 #include <bits/stdc++.h>
 #include <unordered_set>
@@ -23,12 +24,14 @@
 class CentralityCalculator // TODO: Should be called edge_list builder, should account for undirected vs directed, weighted vs unweighted
 {
     private: 
-        const std::vector<std::vector<Adjacent>>& adjacency_matrix;
+        const std::vector<std::vector<Edge>>& adjacency_matrix;
 
-        unsigned int GetFlowCloseness(size_t v, size_t u, unsigned int capacity, std::unordered_set<size_t> seen, std::vector<std::vector<Adjacent>>& adjacency_matrix);
+        unsigned int GetFlowCloseness(size_t v, size_t u, unsigned int capacity, std::unordered_set<size_t> seen, std::vector<std::vector<Edge>>& adjacency_matrix);
+        FCVector SolveMaxFlow(std::vector<std::vector<Edge>> local_matrix, size_t source, size_t sink);
+        std::vector<std::vector<DualCost>> SolveForDistance(const size_t source, const size_t sink);
 
     public:
-        CentralityCalculator(const std::vector<std::vector<Adjacent>>& adjacency_matrix);
+        CentralityCalculator(const std::vector<std::vector<Edge>>& adjacency_matrix);
         std::vector<unsigned int> FlowCloseness();
         std::vector<unsigned int> FlowBetweenness();
         std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FC_Closeness();

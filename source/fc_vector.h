@@ -22,9 +22,15 @@ class FCVector
         std::map<unsigned int, unsigned int> GetFlowCost() const;
         void DEBUG_Display() const;
         void Combine(const FCVector& vector);
+        void Extend(const unsigned int flow, const unsigned int distance);
+        void Merge(const FCVector& v);
         std::vector<std::pair<unsigned int, unsigned int>> BuildNDVector() const;
 
         FCVector& operator+(const FCVector& v);
+        bool operator==(const FCVector& v);
+        FCVector& operator+(const std::pair<unsigned int, unsigned int>& fc);
+
+        FCVector Copy();
 };
 
 #endif

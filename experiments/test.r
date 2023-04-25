@@ -4,8 +4,6 @@
 library("sna")
 library("network")
 
-dataset <- "/home/cappa/Documents/Data/school/Semester8/CPTS_591/project/fc_centrality/networks/toy_undirected.txt"
-
 # m <- matrix(scan(file=dataset, what=integer(0), skip=0, sep=' '), ncol=3, byrow=TRUE)
 # m[,c(1,2)] <- m[,c(2,1)]
 # e <- m[,c(1,2)]
@@ -63,9 +61,20 @@ BuildMatrix = function(filepath, n, undirected=TRUE, weighted=TRUE) {
     return (ADJ)
 }
 
-n <- GetN(dataset)
-matrix <- BuildMatrix(dataset, n)
-print(matrix)
+test_network <- "/home/cappa/Documents/Data/school/Semester8/CPTS_591/project/fc_centrality/networks/toy_undirected.txt"
+n <- GetN(test_network)
+matrix <- BuildMatrix(test_network, n)
+e <- flowbet(matrix, gmode="graph")
+print(e)
 
+karate <- "/home/cappa/Documents/Data/school/Semester8/CPTS_591/project/fc_centrality/networks/karate_undirected.txt"
+n <- GetN(karate)
+matrix <- BuildMatrix(karate, n, weighted=FALSE)
+e <- flowbet(matrix, gmode="graph")
+print(e)
+
+facebook <- "/home/cappa/Documents/Data/school/Semester8/CPTS_591/project/fc_centrality/networks/facebook_combined.txt"
+n <- GetN(facebook)
+matrix <- BuildMatrix(facebook, n, weighted=FALSE)
 e <- flowbet(matrix, gmode="graph")
 print(e)

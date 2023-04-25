@@ -6,7 +6,7 @@ EdgeListBuilder::EdgeListBuilder()
 }
 
 void EdgeListBuilder::AddEdge(
-    std::vector<std::vector<Adjacent>>& list, 
+    std::vector<std::vector<Edge>>& list, 
     const size_t start, 
     const size_t destination, 
     const unsigned int weight
@@ -17,12 +17,12 @@ void EdgeListBuilder::AddEdge(
         list.resize(start + 1);
     }
 
-    list[start].push_back({destination, weight});
+    list[start].push_back({destination, start, weight, 0});
 }
 
-std::vector<std::vector<Adjacent>> EdgeListBuilder::BuildEdgeList(std::ifstream& input_stream)
+std::vector<std::vector<Edge>> EdgeListBuilder::BuildEdgeList(std::ifstream& input_stream)
 {
-    std::vector<std::vector<Adjacent>> adjacency_list;
+    std::vector<std::vector<Edge>> adjacency_list;
     std::string line;
 
     for(size_t vertex_id = 0; std::getline(input_stream, line); vertex_id++)

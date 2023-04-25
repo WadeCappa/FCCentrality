@@ -35,8 +35,29 @@ std::vector<std::pair<unsigned int, unsigned int>> FCVector::BuildNDVector() con
     return nd_res;
 }
 
+void FCVector::Extend(const unsigned int flow, const unsigned int distance)
+{
+    std::map<unsigned int, unsigned int> new_flow_cost;
 
-FCVector& FCVector::operator+(const FCVector& v)
+    for (auto & p : this->flow_cost)
+    {
+        new_flow_cost[p.first + flow] = this->flow_cost[p.first] + (flow * distance);
+    }
+
+    this->flow_cost = new_flow_cost;
+}
+
+
+void FCVector::Merge(const FCVector& v)
+{
+    for (const auto & l : v.GetFlowCost())
+    {
+        unsigned int old_value = this->flow_cost.find(l.first) != this->flow_cost.end() ? this->flow_cost[l.first] : INT_MAX ;
+        this->flow_cost[l.first] = std::min(old_value, l.second);
+    }
+}
+
+void FCVector::Combine(const FCVector& v)
 {
     std::map<unsigned int, unsigned int> new_cost_flow;
 
@@ -53,6 +74,32 @@ FCVector& FCVector::operator+(const FCVector& v)
     }
 
     this->flow_cost = new_cost_flow;
+}
 
+FCVector& FCVector::operator+(const FCVector& v)
+{
+    this->Combine(v);
+
+    return *this;
+}
+
+// FCVector& FCVector::operator+(const std::pair<unsigned int, unsigned int>& fc)
+// {
+//     for (const auto & p : this->flow_cost)
+//     {
+    
+//     }
+
+//     return *this;
+// }
+
+bool FCVector::operator==(const FCVector& v)
+{
+    return v.GetFlowCost() == this->GetFlowCost();
+}
+
+
+FCVector FCVector::Copy()
+{
     return *this;
 }

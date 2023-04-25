@@ -5,10 +5,10 @@ typedef struct queueVertex {
     unsigned int capacity;
     unsigned int distance;
     std::unordered_set<size_t> seen;
-    bool target;
+    bool target = false;
 } QueueVertex;
         
-CentralityCalculator::CentralityCalculator(const std::vector<std::vector<Adjacent>>& adjacency_matrix)
+CentralityCalculator::CentralityCalculator(const std::vector<std::vector<Edge>>& adjacency_matrix)
     : adjacency_matrix(adjacency_matrix)
 {
 }
@@ -23,7 +23,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
         for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
         {
             // run bfs
-            std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+            std::vector<std::vector<Edge>> local_matrix = this->adjacency_matrix;
 
             std::queue<QueueVertex> q;
             q.push({v, INT_MAX, 0, std::unordered_set<size_t>()}); // start vertex;
@@ -45,11 +45,11 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                     k.seen.insert(k.vertex);
                     for (auto & p : local_matrix[k.vertex])
                     {
-                        if (k.seen.find(p.vertex) == k.seen.end())
+                        if (k.seen.find(p.target) == k.seen.end())
                         {
-                            unsigned int new_capacity = std::min(k.capacity, p.weight);
-                            p.weight -= new_capacity;
-                            q.push({p.vertex, new_capacity, k.distance + 1, k.seen});
+                            unsigned int new_capacity = std::min(k.capacity, p.capacity);
+                            p.capacity -= new_capacity;
+                            q.push({p.target, new_capacity, k.distance + 1, k.seen});
                         }
                     }
                 }
@@ -71,6 +71,23 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 {
     NonDominatedVectors<FCVector> betweenness_scores(this->adjacency_matrix.size());
 
+    FCVector e = this->SolveMaxFlow(this->adjacency_matrix, 1, 5);
+
+    for (const auto & r : e.BuildNDVector())
+    {
+        std::cout << "(" << r.first << "," << r.second << "), ";
+    }
+    std::cout << std::endl;
+
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
+
+    for (const auto & e : betweenness_scores.Convert())
+    {
+        res.push_back(e.BuildNDVector());
+    }
+
+    return res;
+
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
     {
@@ -84,7 +101,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                 if (sink == target)
                     continue;
 
-                std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+                std::vector<std::vector<Edge>> local_matrix = this->adjacency_matrix;
                 std::queue<QueueVertex> q;
                 std::queue<QueueVertex> target_q;
                 q.push({source, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
@@ -111,11 +128,11 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                             k.seen.insert(k.vertex);
                             for (auto & p : local_matrix[k.vertex])
                             {
-                                if (k.seen.find(p.vertex) == k.seen.end())
+                                if (k.seen.find(p.target) == k.seen.end())
                                 {
-                                    unsigned int new_capacity = std::min(k.capacity, p.weight);
-                                    p.weight -= new_capacity;
-                                    q.push({p.vertex, new_capacity, k.distance + 1, k.seen, k.target});
+                                    unsigned int new_capacity = std::min(k.capacity, p.capacity);
+                                    p.capacity -= new_capacity;
+                                    q.push({p.target, new_capacity, k.distance + 1, k.seen, k.target});
                                 }
                             }
                         }
@@ -131,12 +148,12 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
         }
     }
 
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
+    // std::vector<std::vector<std::pair<unsigned int, unsigned int>>> res; 
 
-    for (const auto & e : betweenness_scores.Convert())
-    {
-        res.push_back(e.BuildNDVector());
-    }
+    // for (const auto & e : betweenness_scores.Convert())
+    // {
+    //     res.push_back(e.BuildNDVector());
+    // }
 
     return res;
 }
@@ -158,7 +175,7 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
                 if (sink == target)
                     continue;
 
-                std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+                std::vector<std::vector<Edge>> local_matrix = this->adjacency_matrix;
                 std::queue<QueueVertex> q;
                 std::queue<QueueVertex> target_q;
                 q.push({source, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
@@ -184,11 +201,11 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
                             k.seen.insert(k.vertex);
                             for (auto & p : local_matrix[k.vertex])
                             {
-                                if (k.seen.find(p.vertex) == k.seen.end())
+                                if (k.seen.find(p.target) == k.seen.end())
                                 {
-                                    unsigned int new_capacity = std::min(k.capacity, p.weight);
-                                    p.weight -= new_capacity;
-                                    q.push({p.vertex, new_capacity, k.distance + 1, k.seen, k.target});
+                                    unsigned int new_capacity = std::min(k.capacity, p.capacity);
+                                    p.capacity -= new_capacity;
+                                    q.push({p.target, new_capacity, k.distance + 1, k.seen, k.target});
                                 }
                             }
                         }
@@ -216,7 +233,7 @@ std::vector<unsigned int> CentralityCalculator::FlowCloseness()
     {
         for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
         {
-            std::vector<std::vector<Adjacent>> local_matrix = this->adjacency_matrix;
+            std::vector<std::vector<Edge>> local_matrix = this->adjacency_matrix;
 
             unsigned int res = this->GetFlowCloseness(v, u, INT_MAX, std::unordered_set<size_t>(), local_matrix);
             closeness_scores.Update(v, res);
@@ -232,7 +249,7 @@ unsigned int CentralityCalculator::GetFlowCloseness(
     size_t u, // end point
     unsigned int capacity, 
     std::unordered_set<size_t> seen,
-    std::vector<std::vector<Adjacent>>& local_matrix
+    std::vector<std::vector<Edge>>& local_matrix
 )
 {
     if (v == u || capacity <= 0)
@@ -243,13 +260,162 @@ unsigned int CentralityCalculator::GetFlowCloseness(
     unsigned int res = 0;
     for (auto & k : local_matrix[v])
     {
-        if (seen.find(k.vertex) == seen.end())
+        if (seen.find(k.target) == seen.end())
         {
-            unsigned int new_capacity = std::min(capacity, k.weight);
-            k.weight -= new_capacity;
-            res += this->GetFlowCloseness(k.vertex, u, new_capacity, seen, local_matrix);
+            unsigned int new_capacity = std::min(capacity, k.capacity);
+            k.capacity -= new_capacity;
+            res += this->GetFlowCloseness(k.target, u, new_capacity, seen, local_matrix);
         }
     }
 
     return res;
 }
+
+std::vector<std::vector<DualCost>> CentralityCalculator::SolveForDistance(const size_t source, const size_t sink)
+{
+    std::vector<std::vector<DualCost>> res(
+        this->adjacency_matrix.size()
+    );
+
+    std::queue<std::pair<size_t, unsigned int>> distance_queue;
+    distance_queue.push(std::make_pair(source, 0));
+    std::unordered_set<size_t> seen;
+
+    while (!distance_queue.empty())
+    {
+        std::pair<size_t, unsigned int> i = distance_queue.front();
+        distance_queue.pop();
+
+        for (const auto & e : this->adjacency_matrix[i.first])
+        {
+            res[i.first].push_back({e.target, e.capacity, i.second + 1});
+            if (seen.find(e.target) == seen.end())
+            {
+                distance_queue.push(std::make_pair(e.target, i.second + 1));
+                seen.insert(e.target);
+            }
+        }
+    }  
+
+    return res;
+}
+
+
+// Edmonds–Karp algorithm
+FCVector CentralityCalculator::SolveMaxFlow(
+    std::vector<std::vector<Edge>> local_matrix, 
+    size_t source, 
+    size_t sink
+)
+{
+    FCVector res(0,0);
+    unsigned int flow = 0;
+
+    while (true)
+    {
+        std::queue<size_t> q;
+        q.push(source);
+
+        std::vector<std::pair<size_t, size_t>> path(local_matrix.size(), std::make_pair(-1,-1));
+        std::unordered_set<size_t> seen;
+        seen.insert(source);
+
+        while (!q.empty())
+        {
+            size_t current = q.front();
+            q.pop();
+        
+            for (size_t i = 0; i < local_matrix[current].size(); i++)
+            {
+                Edge e = local_matrix[current][i];
+                if (seen.find(e.target) == seen.end() && e.target != source && e.capacity > e.flow)
+                {
+                    path[e.target] = std::make_pair(current, i);
+                    seen.insert(e.target);
+                    q.push(e.target);
+                }
+            }
+        }
+
+        if (seen.find(sink) != seen.end())
+        {
+            unsigned int path_flow = INT_MAX;
+            for (size_t i = sink; i >= 0 && i < local_matrix.size() && path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
+            {
+                Edge edge = local_matrix[path[i].first][path[i].second];
+                path_flow = std::min(path_flow, edge.capacity - edge.flow);
+            }
+
+            for (size_t i = sink; i >= 0 && i < local_matrix.size() && path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
+            {
+                Edge& edge = local_matrix[path[i].first][path[i].second];
+                // Edge& reverse_edge = local_matrix[path[i].second][path[i].first];
+                edge.flow = edge.flow + path_flow;
+                // reverse_edge.flow = reverse_edge.flow + path_flow;
+            }
+            flow = flow + path_flow;
+        }
+        else
+        {
+            std::cout << flow << std::endl;
+            return res;
+        }
+    }
+}
+
+// broken, an attempt at a bi-objective network flow algorithm, 
+// FCVector CentralityCalculator::SolveMaxFlow(
+//     std::vector<std::vector<Edge>> local_matrix, 
+//     size_t source, 
+//     size_t sink
+// )
+// {
+//     typedef struct cost {
+//         size_t vertex;
+//         unsigned int distance;
+//     } TraversalData;
+
+//     std::stack<TraversalData> modNodes;
+//     std::unordered_map<size_t, FCVector> labels;
+//     std::unordered_set<size_t> in_stack;
+
+//     for (size_t n = 0; n < local_matrix.size(); n++)
+//     {
+//         labels.insert({n, FCVector(0,0)});    
+//     }
+
+//     modNodes.push({source, 0});
+//     in_stack.insert(source);
+
+//     int count = 0;
+
+//     while (!modNodes.empty() && count++ < 10)
+//     {
+//         TraversalData i = modNodes.top();
+//         modNodes.pop();
+//         in_stack.erase(i.vertex);
+
+//         labels[i.vertex].DEBUG_Display();
+
+//         for (const auto & j : local_matrix[i.vertex])
+//         {
+//             FCVector temp(j.capacity, i.distance);
+//             FCVector old_label = labels[j.vertex].Copy();
+//             FCVector working_label = labels[i.vertex].Copy();
+
+//             // working_label.Combine(temp); // extend, this operation needs to be double checked
+//             working_label.Extend(j.capacity, i.distance);
+//             labels[j.vertex].Merge(working_label); // merges, this operation needs to be double checked
+
+//             // labels[j.vertex].DEBUG_Display();
+            
+//             if (old_label.GetFlowCost() != labels[j.vertex].GetFlowCost() && in_stack.find(j.vertex) == in_stack.end())
+//             {
+//                 modNodes.push({j.vertex, i.distance});
+//                 in_stack.insert(j.vertex);
+//             }
+//         }
+//     }
+
+//     return labels[sink];
+// }
