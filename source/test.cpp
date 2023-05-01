@@ -4,9 +4,9 @@
 #include <iterator>    
 #include <chrono>
 
-#include "adjacency_matrix_builder.h"
-#include "adjacent.h"
-#include "centrality_calculator.h"
+#include "adjacency_builder/adjacency_matrix_builder.h"
+#include "flow_cost_centrality/edge_structs.h"
+#include "flow_cost_centrality/centrality_calculator.h"
 
 int main(int argc, char* argv[])
 {

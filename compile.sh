@@ -1,1 +1,1 @@
-g++ -Os -fopenmp source/*.cpp
+g++ -Os -fopenmp source/test.cpp source/adjacency_builder/*.cpp source/flow_cost_centrality/*.cpp

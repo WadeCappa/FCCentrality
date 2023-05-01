@@ -9,7 +9,7 @@
 #include <omp.h>
 #include <mutex>
 
-#include "adjacent.h"
+#include "edge_structs.h"
 #include "flow_cost_label.h"
 #include "non_dominated_vectors.h"
 

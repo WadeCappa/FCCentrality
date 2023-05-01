@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "adjacent.h"
+#include "../flow_cost_centrality/edge_structs.h"
 
 #ifndef DATAEXTRACTOR_H
 #define DATAEXTRACTOR_H
