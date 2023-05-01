@@ -15,8 +15,9 @@
 #include <mutex>
 
 #include "adjacent.h"
-#include "fc_vector.h"
+#include "flow_cost_label.h"
 #include "non_dominated_vectors.h"
+#include "flow_max_calculator.h"
 
 #ifndef FCCLOSENESS_H
 #define FCCLOSENESS_H
@@ -27,15 +28,15 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
         const std::vector<std::vector<Edge>>& adjacency_matrix;
 
         unsigned int GetFlowCloseness(size_t v, size_t u, unsigned int capacity, std::unordered_set<size_t> seen, std::vector<std::vector<Edge>>& adjacency_matrix);
-        FCVector SolveMaxFlow(std::vector<std::vector<Edge>>& local_matrix, size_t source, size_t sink, size_t target);
+        FlowCostLabel SolveMaxFlow(std::vector<std::vector<Edge>>& local_matrix, size_t source, size_t sink, size_t target);
         std::vector<std::vector<DualCost>> SolveForDistance(const size_t source, const size_t sink);
 
     public:
         CentralityCalculator(const std::vector<std::vector<Edge>>& adjacency_matrix);
         std::vector<unsigned int> FlowCloseness();
         std::vector<unsigned int> FlowBetweenness();
-        std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FC_Closeness();
-        std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FC_Betweenness();
+        std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FlowCostCloseness();
+        std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FlowCostBetweenness();
 };
 
 #endif

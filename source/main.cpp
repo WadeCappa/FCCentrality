@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     }
 
     start = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FC_Betweenness();
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FlowCostBetweenness();
     stop = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     std::cout << "flow-cost betweenness runtime: " << duration.count() << std::endl;

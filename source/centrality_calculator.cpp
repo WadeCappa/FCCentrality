@@ -13,9 +13,9 @@ CentralityCalculator::CentralityCalculator(const std::vector<std::vector<Edge>>&
 {
 }
 
-std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FC_Closeness()
+std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FlowCostCloseness()
 {
-    NonDominatedVectors<FCVector> closeness_scores(this->adjacency_matrix.size());
+    NonDominatedVectors<FlowCostLabel> closeness_scores(this->adjacency_matrix.size());
 
     #pragma omp parallel for
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
@@ -35,7 +35,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
                 if (k.vertex == u)
                 {
-                    FCVector temp(k.capacity, k.distance);
+                    FlowCostLabel temp(k.capacity, k.distance);
 
                     closeness_scores.Update(v, temp);
                     closeness_scores.Update(u, temp);
@@ -67,9 +67,10 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
     return res;
 }
 
-std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FC_Betweenness()
+std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalculator::FlowCostBetweenness()
 {
-    NonDominatedVectors<FCVector> betweenness_scores(this->adjacency_matrix.size());
+    NonDominatedVectors<FlowCostLabel> betweenness_scores(this->adjacency_matrix.size());
+    FlowMaxCalculator calculator;
 
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
@@ -85,8 +86,17 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
                     continue;
 
                 auto copy = this->adjacency_matrix;
-                FCVector raw_score = this->SolveMaxFlow(copy, source, sink, target);
-                betweenness_scores.Update(target, raw_score);
+
+                // auto result = this->SolveMaxFlow(copy, source, sink, target);
+
+                FlowCostLabel result = calculator.SolveFlowCostBetweenness(
+                    copy,
+                    source, 
+                    sink,
+                    target
+                );
+
+                betweenness_scores.Update(target, result);
             }
         }
     }
@@ -103,7 +113,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
 
 std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
 {
-    NonDominatedVectors<unsigned int> betweenness_scores(this->adjacency_matrix.size());
+    std::vector<unsigned int> betweenness_scores(this->adjacency_matrix.size(), 0);
+    FlowMaxCalculator calculator;
 
     #pragma omp parallel for
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
@@ -112,59 +123,27 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
         {
             if (source == target)
                 continue;
-            
+
             for (size_t sink = source + 1; sink < this->adjacency_matrix.size(); sink++)
             {
                 if (sink == target)
                     continue;
 
-                std::vector<std::vector<Edge>> local_matrix = this->adjacency_matrix;
-                std::queue<QueueVertex> q;
-                std::queue<QueueVertex> target_q;
-                q.push({source, INT_MAX, 0, std::unordered_set<size_t>(), false}); // start vertex;
+                auto copy = this->adjacency_matrix;
 
-                while (!q.empty())
-                {
-                    QueueVertex k = q.front();
-                    q.pop();
+                unsigned int result = calculator.SolveFlowBetweenness(
+                    copy,
+                    source, 
+                    sink,
+                    target
+                );
 
-                    if (k.vertex == target && k.target == false)
-                    {
-                        k.target = true;
-                        target_q.push(k);
-                    }
-                    else
-                    {
-                        if (k.vertex == sink && k.target == true)
-                        {
-                            betweenness_scores.Update(target, k.capacity);
-                        }
-                        else if (k.capacity > 0)
-                        {
-                            k.seen.insert(k.vertex);
-                            for (auto & p : local_matrix[k.vertex])
-                            {
-                                if (k.seen.find(p.target) == k.seen.end())
-                                {
-                                    unsigned int new_capacity = std::min(k.capacity, p.capacity);
-                                    p.capacity -= new_capacity;
-                                    q.push({p.target, new_capacity, k.distance + 1, k.seen, k.target});
-                                }
-                            }
-                        }
-                    }
-
-                    if (q.empty())
-                    {
-                        q = target_q;
-                        target_q = std::queue<QueueVertex>();
-                    }
-                }
+                betweenness_scores[target] += result;
             }
         }
     }
 
-    return betweenness_scores.Convert();
+    return betweenness_scores;
 }
 
 std::vector<unsigned int> CentralityCalculator::FlowCloseness()
@@ -246,14 +225,14 @@ std::vector<std::vector<DualCost>> CentralityCalculator::SolveForDistance(const 
 
 // Edmonds–Karp algorithm
 // TODO: There is a bug here, shows up when traversing the network from 1 to 5. Fix this then you are golden
-FCVector CentralityCalculator::SolveMaxFlow(
+FlowCostLabel CentralityCalculator::SolveMaxFlow(
     std::vector<std::vector<Edge>>& local_matrix, 
     size_t source, 
     size_t sink,
     size_t target
 )
 {
-    FCVector label(0,0);
+    FlowCostLabel label(0,0);
     unsigned int flow = 0;
 
     while (true)
@@ -301,7 +280,7 @@ FCVector CentralityCalculator::SolveMaxFlow(
             }
 
             flow = flow + path_flow;
-            FCVector temp(path_flow, distance);
+            FlowCostLabel temp(path_flow, distance);
             label.Combine(temp);
         }
         else
@@ -315,7 +294,7 @@ FCVector CentralityCalculator::SolveMaxFlow(
 }
 
 // broken, an attempt at a bi-objective network flow algorithm, 
-// FCVector CentralityCalculator::SolveMaxFlow(
+// FlowCostLabel CentralityCalculator::SolveMaxFlow(
 //     std::vector<std::vector<Edge>> local_matrix, 
 //     size_t source, 
 //     size_t sink
@@ -327,12 +306,12 @@ FCVector CentralityCalculator::SolveMaxFlow(
 //     } TraversalData;
 
 //     std::stack<TraversalData> modNodes;
-//     std::unordered_map<size_t, FCVector> labels;
+//     std::unordered_map<size_t, FlowCostLabel> labels;
 //     std::unordered_set<size_t> in_stack;
 
 //     for (size_t n = 0; n < local_matrix.size(); n++)
 //     {
-//         labels.insert({n, FCVector(0,0)});    
+//         labels.insert({n, FlowCostLabel(0,0)});    
 //     }
 
 //     modNodes.push({source, 0});
@@ -350,9 +329,9 @@ FCVector CentralityCalculator::SolveMaxFlow(
 
 //         for (const auto & j : local_matrix[i.vertex])
 //         {
-//             FCVector temp(j.capacity, i.distance);
-//             FCVector old_label = labels[j.vertex].Copy();
-//             FCVector working_label = labels[i.vertex].Copy();
+//             FlowCostLabel temp(j.capacity, i.distance);
+//             FlowCostLabel old_label = labels[j.vertex].Copy();
+//             FlowCostLabel working_label = labels[i.vertex].Copy();
 
 //             // working_label.Combine(temp); // extend, this operation needs to be double checked
 //             working_label.Extend(j.capacity, i.distance);

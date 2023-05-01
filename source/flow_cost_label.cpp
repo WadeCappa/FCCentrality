@@ -1,11 +1,11 @@
-#include "fc_vector.h"
+#include "flow_cost_label.h"
 
-FCVector::FCVector()
+FlowCostLabel::FlowCostLabel()
 {
     this->flow_cost[0] = 0;
 }
 
-FCVector::FCVector(unsigned int capacity, unsigned int cost)
+FlowCostLabel::FlowCostLabel(unsigned int capacity, unsigned int cost)
 {
     for (unsigned int i = 0; i <= capacity; i++)
     {
@@ -13,7 +13,7 @@ FCVector::FCVector(unsigned int capacity, unsigned int cost)
     }
 }
 
-void FCVector::DEBUG_Display() const
+void FlowCostLabel::DEBUG_Display() const
 {
     auto vtr = this->BuildNDVector();
     for (const auto & e : vtr)
@@ -23,19 +23,19 @@ void FCVector::DEBUG_Display() const
     std::cout << std::endl;
 }
 
-std::map<unsigned int, unsigned int> FCVector::GetFlowCost() const
+std::map<unsigned int, unsigned int> FlowCostLabel::GetFlowCost() const
 {
     return this->flow_cost;
 }
 
-std::vector<std::pair<unsigned int, unsigned int>> FCVector::BuildNDVector() const
+std::vector<std::pair<unsigned int, unsigned int>> FlowCostLabel::BuildNDVector() const
 {
     std::vector<std::pair<unsigned int, unsigned int>> nd_res(this->flow_cost.begin(), this->flow_cost.end());
     std::reverse(nd_res.begin(), nd_res.end());
     return nd_res;
 }
 
-void FCVector::Extend(const unsigned int flow, const unsigned int distance)
+void FlowCostLabel::Extend(const unsigned int flow, const unsigned int distance)
 {
     std::map<unsigned int, unsigned int> new_flow_cost;
 
@@ -48,7 +48,7 @@ void FCVector::Extend(const unsigned int flow, const unsigned int distance)
 }
 
 
-void FCVector::Merge(const FCVector& v)
+void FlowCostLabel::Merge(const FlowCostLabel& v)
 {
     for (const auto & l : v.GetFlowCost())
     {
@@ -57,7 +57,7 @@ void FCVector::Merge(const FCVector& v)
     }
 }
 
-void FCVector::Combine(const FCVector& v)
+void FlowCostLabel::Combine(const FlowCostLabel& v)
 {
     std::map<unsigned int, unsigned int> new_cost_flow;
 
@@ -76,30 +76,15 @@ void FCVector::Combine(const FCVector& v)
     this->flow_cost = new_cost_flow;
 }
 
-FCVector& FCVector::operator+(const FCVector& v)
+FlowCostLabel& FlowCostLabel::operator+(const FlowCostLabel& v)
 {
     this->Combine(v);
 
     return *this;
 }
 
-// FCVector& FCVector::operator+(const std::pair<unsigned int, unsigned int>& fc)
-// {
-//     for (const auto & p : this->flow_cost)
-//     {
-    
-//     }
 
-//     return *this;
-// }
-
-bool FCVector::operator==(const FCVector& v)
+bool FlowCostLabel::operator==(const FlowCostLabel& v)
 {
     return v.GetFlowCost() == this->GetFlowCost();
-}
-
-
-FCVector FCVector::Copy()
-{
-    return *this;
 }

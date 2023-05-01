@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <concepts>
 
-#include "fc_vector.h"
+#include "flow_cost_label.h"
 
 #ifndef NONDOMINATEDVECTORS_H
 #define NONDOMINATEDVECTORS_H
