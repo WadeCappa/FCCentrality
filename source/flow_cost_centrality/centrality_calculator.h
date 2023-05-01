@@ -37,6 +37,9 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
         std::vector<unsigned int> FlowBetweenness();
         std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FlowCostCloseness();
         std::vector<std::vector<std::pair<unsigned int, unsigned int>>> FlowCostBetweenness();
+
+        std::vector<size_t> SortByFlowCostScores(const std::vector<std::vector<std::pair<unsigned int, unsigned int>>>& scores);
+        std::vector<size_t> SortByFlowScores(const std::vector<unsigned int>& scores);
 };
 
 #endif

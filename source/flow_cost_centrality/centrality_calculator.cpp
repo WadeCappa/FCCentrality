@@ -139,3 +139,70 @@ std::vector<unsigned int> CentralityCalculator::FlowCloseness()
 
     return closeness_scores.Convert();
 }
+
+std::vector<size_t> CentralityCalculator::SortByFlowCostScores(
+    const std::vector<std::vector<std::pair<unsigned int, unsigned int>>>& scores
+)
+{
+    typedef struct sortStruct {
+        size_t vertex;
+        std::vector<std::pair<unsigned int, unsigned int>> flow_cost;
+    } SortStruct;
+
+    std::vector<SortStruct> sort_data(scores.size());
+
+    for (size_t i = 0; i < scores.size(); i++)
+    {
+        sort_data[i].vertex = i;
+        sort_data[i].flow_cost = scores[i];
+    }
+
+    std::sort(sort_data.begin(), sort_data.end(), [](SortStruct &left, SortStruct &right) {
+        if (left.flow_cost.size() != right.flow_cost.size())
+        {
+            return left.flow_cost.size() < right.flow_cost.size();
+        }
+
+        for (size_t i = 0; i < left.flow_cost.size(); i++)
+        {
+            if (left.flow_cost[i].second != right.flow_cost[i].second)
+            {
+                return left.flow_cost[i].second < right.flow_cost[i].second;
+            }
+        }
+
+        return false;
+    });
+
+    std::vector<size_t> res(scores.size());
+
+    for (size_t i = 0; i < scores.size(); i++)
+    {
+        res[i] = sort_data[i].vertex;
+    }
+
+    return res;
+}
+
+
+std::vector<size_t> CentralityCalculator::SortByFlowScores(const std::vector<unsigned int>& scores)
+{
+    std::vector<std::pair<size_t, unsigned int>> vertex_to_flow(scores.size());
+    for (size_t i = 0; i < scores.size(); i++)
+    {
+        vertex_to_flow[i].first = i;
+        vertex_to_flow[i].second = scores[i];
+    }
+
+    std::sort(vertex_to_flow.begin(), vertex_to_flow.end(), [](auto& left, auto& right){
+        return left.second < right.second;
+    });
+
+    std::vector<size_t> res(scores.size());
+    for (size_t i = 0 ;i < scores.size(); i++)
+    {
+        res[i] = vertex_to_flow[i].first;
+    }
+
+    return res;
+}
