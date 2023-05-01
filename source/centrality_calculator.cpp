@@ -261,7 +261,7 @@ FCVector CentralityCalculator::SolveMaxFlow(
         std::queue<size_t> q;
         q.push(source);
 
-        std::vector<std::pair<size_t, size_t>> path(local_matrix.size(), std::make_pair(-1,-1));
+        std::vector<std::pair<size_t, size_t>> path(local_matrix.size(), std::make_pair(-1,-1)); // pointers to edges in local_matrix
         std::unordered_set<size_t> seen;
         seen.insert(source);
 
@@ -286,21 +286,22 @@ FCVector CentralityCalculator::SolveMaxFlow(
         {
             unsigned int path_flow = INT_MAX;
             unsigned int distance = 0;
-            for (size_t i = sink; i >= 0 && i < local_matrix.size() && path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
+
+            for (size_t i = sink; path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
             {
                 Edge edge = local_matrix[path[i].first][path[i].second];
                 path_flow = std::min(path_flow, edge.capacity - edge.flow);
-                distance++;
+                distance++; 
             }
-
-            for (size_t i = sink; i >= 0 && i < local_matrix.size() && path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
-            {
+ 
+            for (size_t i = sink; path[i].first != -1; i = local_matrix[path[i].first][path[i].second].parent)
+            {                
                 Edge& edge = local_matrix[path[i].first][path[i].second];
                 edge.flow = edge.flow + path_flow;
             }
 
             flow = flow + path_flow;
-            FCVector temp(flow, distance);
+            FCVector temp(path_flow, distance);
             label.Combine(temp);
         }
         else
