@@ -13,6 +13,10 @@ int main(int argc, char* argv[])
     std::ifstream input;
 	input.open(argv[1]);
 
+    std::cout << argv[1] << std::endl;
+
+    size_t output_size = atoi(argv[2]);
+
     if (!input) 
     {
 		std::cout << "could not find file" << std::endl;
@@ -20,7 +24,7 @@ int main(int argc, char* argv[])
 	}
 
     EdgeListBuilder builder;
-    // builder.Undirected();
+    builder.Undirected();
 
     std::vector<std::vector<Edge>> adjacency_matrix = builder.BuildEdgeList(input);
     input.close();
@@ -37,12 +41,17 @@ int main(int argc, char* argv[])
     std::cout << "flow betweenneess runtime: " << duration.count() << std::endl;
 
     std::vector<size_t> sorted_flow_vertices = calculator.SortByFlowScores(flow_betweenness);
-    for (size_t i = 0; i < 32; i++)
+    for (size_t i = 0; i < output_size && i < sorted_flow_vertices.size(); i++)
     {
         std::cout << sorted_flow_vertices[i] << ", ";
     }
 
     std::cout << std::endl;
+
+    // for (size_t i = 0; i < flow_betweenness.size(); i++)
+    // {
+    //     std::cout << i << ": " << flow_betweenness[i] << std::endl;
+    // }
 
     start = std::chrono::high_resolution_clock::now();
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FlowCostBetweenness();
@@ -52,10 +61,11 @@ int main(int argc, char* argv[])
     std::cout << "flow-cost betweenness runtime: " << duration.count() << std::endl;
 
     std::vector<size_t> sorted_vertices = calculator.SortByFlowCostScores(closeness);
-    for (size_t i = 0; i < 32; i++)
+    for (size_t i = 0; i < output_size && i < sorted_vertices.size(); i++)
     {
         std::cout << sorted_vertices[i] << ", ";
     }
 
     std::cout << std::endl;
+
 }

@@ -181,6 +181,8 @@ std::vector<size_t> CentralityCalculator::SortByFlowCostScores(
         res[i] = sort_data[i].vertex;
     }
 
+    std::reverse(res.begin(), res.end());
+
     return res;
 }
 
@@ -203,6 +205,8 @@ std::vector<size_t> CentralityCalculator::SortByFlowScores(const std::vector<uns
     {
         res[i] = vertex_to_flow[i].first;
     }
+
+    std::reverse(res.begin(), res.end());
 
     return res;
 }
