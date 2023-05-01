@@ -63,4 +63,15 @@ int main(int argc, char* argv[])
         }        
         std::cout << std::endl;
     }
+
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> flow_cost_closeness = calculator.FlowCostCloseness();
+    for (auto itr = flow_cost_closeness.begin(); itr != flow_cost_closeness.end(); itr++)
+    {
+        std::cout << "vertex " << std::distance(flow_cost_closeness.begin(), itr) << ": ";
+        for (const auto & e : *itr)
+        {
+             std::cout << "(" << e.first << "," << e.second << ")" << ", ";
+        }        
+        std::cout << std::endl;
+    }
 }

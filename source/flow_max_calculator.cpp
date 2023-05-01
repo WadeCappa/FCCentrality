@@ -67,7 +67,7 @@ void FlowMaxCalculator::UpdateMatrix(
     }
 }
 
-
+// Edmonds–Karp algorithm
 unsigned int FlowMaxCalculator::SolveFlowMax(    
     std::vector<std::vector<Edge>>& local_matrix, 
     const size_t& source, 

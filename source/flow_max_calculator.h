@@ -68,6 +68,24 @@ class FlowMaxCalculator
             const size_t& sink,
             const size_t& target
         );
+
+        unsigned int SolveFlowMax(
+            std::vector<std::vector<Edge>>& local_matrix, 
+            const size_t& source, 
+            const size_t& sink
+        ) 
+        {
+            return this->SolveFlowMax(local_matrix, source, sink, -1);
+        }
+
+        FlowCostLabel SolveFlowCostMax(
+            std::vector<std::vector<Edge>>& local_matrix, 
+            const size_t& source, 
+            const size_t& sink
+        )
+        {
+            return this->SolveFlowCostMax(local_matrix, source, sink, -1);
+        }
 };
 
 #endif
