@@ -10,6 +10,12 @@
 
 int main(int argc, char* argv[])
 {
+    if (argc < 3)
+    {
+        std::cout << "missing input!" << std::endl;
+        exit(1);
+    }
+
     std::ifstream input;
 	input.open(argv[1]);
 
@@ -33,37 +39,66 @@ int main(int argc, char* argv[])
 
     CentralityCalculator calculator(adjacency_matrix);
 
+    // flow-cost betweenness
     auto start = std::chrono::high_resolution_clock::now();
-    std::vector<unsigned int> flow_betweenness = calculator.FlowBetweenness();
+    // std::vector<std::vector<std::pair<unsigned int, unsigned int>>> flow_cost_betweenness = calculator.FlowCostBetweenness();
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "flow betweenneess runtime: " << duration.count() << std::endl;
+    // std::cout << "flow-cost betweenness runtime: " << duration.count() << std::endl;
 
-    std::vector<size_t> sorted_flow_vertices = calculator.SortByFlowScores(flow_betweenness);
-    for (size_t i = 0; i < output_size && i < sorted_flow_vertices.size(); i++)
+    // std::vector<size_t> s1 = calculator.SortByFlowCostScores(flow_cost_betweenness);
+    // for (size_t i = 0; i < output_size && i < s1.size(); i++)
+    // {
+    //     std::cout << s1[i] << ", ";
+    // }
+
+    // std::cout << std::endl;
+
+    // flow betweenness
+    // start = std::chrono::high_resolution_clock::now();
+    // std::vector<unsigned int> flow_betweenness = calculator.FlowBetweenness();
+    // stop = std::chrono::high_resolution_clock::now();
+
+    // duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    // std::cout << "flow betweenneess runtime: " << duration.count() << std::endl;
+
+    // std::vector<size_t> sorted_flow_vertices = calculator.SortByFlowScores(flow_betweenness);
+    // for (size_t i = 0; i < output_size && i < sorted_flow_vertices.size(); i++)
+    // {
+    //     std::cout << sorted_flow_vertices[i] << ", ";
+    // }
+
+    // std::cout << std::endl;
+
+    // flow-cost closeness
+    start = std::chrono::high_resolution_clock::now();
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> flow_cost_closeness= calculator.FlowCostCloseness();
+    stop = std::chrono::high_resolution_clock::now();
+
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    std::cout << "flow-cost closeness runtime: " << duration.count() << std::endl;
+
+    std::vector<size_t> s3 = calculator.SortByFlowCostScores(flow_cost_closeness);
+    for (size_t i = 0; i < output_size && i < s3.size(); i++)
     {
-        std::cout << sorted_flow_vertices[i] << ", ";
+        std::cout << s3[i] << ", ";
     }
 
     std::cout << std::endl;
 
-    // for (size_t i = 0; i < flow_betweenness.size(); i++)
-    // {
-    //     std::cout << i << ": " << flow_betweenness[i] << std::endl;
-    // }
-
+    // flow closeness
     start = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FlowCostBetweenness();
+    std::vector<unsigned int> closeness = calculator.FlowCloseness();
     stop = std::chrono::high_resolution_clock::now();
 
     duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "flow-cost betweenness runtime: " << duration.count() << std::endl;
+    std::cout << "flow closeness runtime: " << duration.count() << std::endl;
 
-    std::vector<size_t> sorted_vertices = calculator.SortByFlowCostScores(closeness);
-    for (size_t i = 0; i < output_size && i < sorted_vertices.size(); i++)
+    std::vector<size_t> s4 = calculator.SortByFlowScores(closeness);
+    for (size_t i = 0; i < output_size && i < s4.size(); i++)
     {
-        std::cout << sorted_vertices[i] << ", ";
+        std::cout << s4[i] << ", ";
     }
 
     std::cout << std::endl;

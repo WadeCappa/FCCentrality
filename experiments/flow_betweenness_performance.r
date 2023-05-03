@@ -66,7 +66,7 @@ BuildMatrix = function(filepath, n, undirected=TRUE, weighted=TRUE) {
     return (ADJ)
 }
 
-test_network <- "networks/synthetic/network_v64.txt"
+test_network <- "networks/synthetic/network_v32.txt"
 n <- GetN(test_network)
 matrix <- BuildMatrix(test_network, n, undirected=TRUE)
 print("built network")

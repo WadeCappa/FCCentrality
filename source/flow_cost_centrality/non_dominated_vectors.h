@@ -9,6 +9,7 @@
 #include <string>
 #include <cstddef>
 #include <concepts>
+#include <chrono>
 
 #include "flow_cost_label.h"
 
@@ -19,6 +20,7 @@ template<typename T>
 class NonDominatedVectors
 {
     private:
+        std::vector<std::chrono::microseconds> timings;
         std::vector<std::pair<T, std::mutex>> scores;
 
     public:
@@ -45,6 +47,18 @@ class NonDominatedVectors
                 res[i] = this->scores[i].first;
             }
             return res;
+        }
+
+        unsigned long long GetTotalTime()
+        {
+            unsigned long long total_time = 0;
+
+            for (const auto & e : this->timings)
+            {
+                total_time += e.count();
+            }
+
+            return total_time;
         }
 };
 

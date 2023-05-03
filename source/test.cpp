@@ -10,6 +10,8 @@
 
 int main(int argc, char* argv[])
 {
+    std::vector<unsigned int> points_of_interest = {1, 2, 22, 209, 17, 178, 31, 12, 199, 143, 120, 11, 35, 129, 131, 61, 168, 80, 188, 19, 32, 166, 197, 113, 193, 8, 237, 124, 97, 187, 201, 247};
+
     std::ifstream input;
 	input.open(argv[1]);
 
@@ -27,51 +29,23 @@ int main(int argc, char* argv[])
 
     std::cout << "loaded network..." << std::endl;
 
-    for (size_t v = 0 ; v < adjacency_matrix.size(); v++)
-    {
-        for (const auto & e : adjacency_matrix[v])
-        {
-            std::cout << v << " -> " << e.target << ", " << e.capacity << ", " << e.flow << ", " << e.parent << std::endl;
-        }
-    }
-
     CentralityCalculator calculator(adjacency_matrix);
 
-    auto start = std::chrono::high_resolution_clock::now();
-    std::vector<unsigned int> flow_betweenness = calculator.FlowBetweenness();
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "flow betweenneess runtime: " << duration.count() << std::endl;
+    // auto start = std::chrono::high_resolution_clock::now();
+    // std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FlowCostCloseness();
+    // auto stop = std::chrono::high_resolution_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    // std::cout << "flow-cost betweenness runtime: " << duration.count() << std::endl;
 
-    for (size_t i = 0; i < flow_betweenness.size(); i++)
+    // for (size_t i = 0; i < points_of_interest.size(); i++)
+    // {
+    //     std::cout << "vertex " << points_of_interest[i] << ": " << "(" << closeness[points_of_interest[i]][0].first << "," << closeness[points_of_interest[i]][0].second << ")" << ", ";
+    // }
+
+    std::vector<unsigned int> flow_closeness = calculator.FlowCloseness();
+    for (size_t i = 0; i < points_of_interest.size(); i++)
     {
-        std::cout << i << ": " << flow_betweenness[i] << std::endl;
-    }
-
-    start = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> closeness = calculator.FlowCostBetweenness();
-    stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "flow-cost betweenness runtime: " << duration.count() << std::endl;
-
-    for (auto itr = closeness.begin(); itr != closeness.end(); itr++)
-    {
-        std::cout << "vertex " << std::distance(closeness.begin(), itr) << ": ";
-        for (const auto & e : *itr)
-        {
-             std::cout << "(" << e.first << "," << e.second << ")" << ", ";
-        }        
-        std::cout << std::endl;
-    }
-
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> flow_cost_closeness = calculator.FlowCostCloseness();
-    for (auto itr = flow_cost_closeness.begin(); itr != flow_cost_closeness.end(); itr++)
-    {
-        std::cout << "vertex " << std::distance(flow_cost_closeness.begin(), itr) << ": ";
-        for (const auto & e : *itr)
-        {
-             std::cout << "(" << e.first << "," << e.second << ")" << ", ";
-        }        
+        std::cout << "vertex " << points_of_interest[i] << ": " << flow_closeness[points_of_interest[i]]; 
         std::cout << std::endl;
     }
 }

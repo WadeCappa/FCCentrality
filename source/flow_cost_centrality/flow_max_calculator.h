@@ -38,13 +38,6 @@ class FlowMaxCalculator
             const unsigned int& path_flow
         );
 
-        unsigned int SolveFlowMax(    
-            std::vector<std::vector<Edge>>& local_matrix, 
-            const size_t& source, 
-            const size_t& sink,
-            const size_t& target
-        );
-
         FlowCostLabel SolveFlowCostMax(
             std::vector<std::vector<Edge>>& local_matrix, 
             const size_t& source, 
@@ -54,6 +47,13 @@ class FlowMaxCalculator
 
     public:
         FlowMaxCalculator(){};
+
+        unsigned int SolveFlowMax(    
+            std::vector<std::vector<Edge>>& local_matrix, 
+            const size_t& source, 
+            const size_t& sink,
+            const size_t& target
+        );
 
         unsigned int SolveFlowBetweenness(
             std::vector<std::vector<Edge>>& local_matrix, 

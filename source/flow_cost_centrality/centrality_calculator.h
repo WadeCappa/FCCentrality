@@ -13,6 +13,7 @@
 #include <cmath>
 #include <omp.h>
 #include <mutex>
+#include <chrono>
 
 #include "edge_structs.h"
 #include "flow_cost_label.h"
@@ -26,6 +27,8 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
 {
     private: 
         const std::vector<std::vector<Edge>>& adjacency_matrix;
+        std::vector<std::chrono::microseconds> timings;
+        unsigned int vector_operation_timings;
 
         unsigned int GetFlowCloseness(size_t v, size_t u, unsigned int capacity, std::unordered_set<size_t> seen, std::vector<std::vector<Edge>>& adjacency_matrix);
         FlowCostLabel SolveMaxFlow(std::vector<std::vector<Edge>>& local_matrix, size_t source, size_t sink, size_t target);
@@ -40,6 +43,8 @@ class CentralityCalculator // TODO: Should be called edge_list builder, should a
 
         std::vector<size_t> SortByFlowCostScores(const std::vector<std::vector<std::pair<unsigned int, unsigned int>>>& scores);
         std::vector<size_t> SortByFlowScores(const std::vector<unsigned int>& scores);
+
+        std::pair<unsigned long long, unsigned long long> GetTimings();
 };
 
 #endif

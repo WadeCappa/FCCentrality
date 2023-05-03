@@ -18,7 +18,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
     NonDominatedVectors<FlowCostLabel> closeness_scores(this->adjacency_matrix.size());
     FlowMaxCalculator calculator;
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
     {
         for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
@@ -45,7 +45,7 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
     NonDominatedVectors<FlowCostLabel> betweenness_scores(this->adjacency_matrix.size());
     FlowMaxCalculator calculator;
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
     {
         for (size_t source = 0; source < this->adjacency_matrix.size(); source++)
@@ -81,6 +81,8 @@ std::vector<std::vector<std::pair<unsigned int, unsigned int>>> CentralityCalcul
         res.push_back(e.BuildNDVector());
     }
 
+    this->vector_operation_timings = betweenness_scores.GetTotalTime();
+
     return res;
 }
 
@@ -89,29 +91,24 @@ std::vector<unsigned int> CentralityCalculator::FlowBetweenness()
     std::vector<unsigned int> betweenness_scores(this->adjacency_matrix.size(), 0);
     FlowMaxCalculator calculator;
 
-    #pragma omp parallel for
-    for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
+    #pragma omp parallel for schedule(dynamic)
+    for (size_t source = 0; source < this->adjacency_matrix.size(); source++)
     {
-        for (size_t source = 0; source < this->adjacency_matrix.size(); source++)
+        for (size_t sink = source + 1; sink < this->adjacency_matrix.size(); sink++)
         {
-            if (source == target)
-                continue;
+            auto copy = this->adjacency_matrix; 
+            unsigned int max_score = calculator.SolveFlowMax(copy, source, sink);
 
-            for (size_t sink = source + 1; sink < this->adjacency_matrix.size(); sink++)
+            for (size_t target = 0; target < this->adjacency_matrix.size(); target++)
             {
-                if (sink == target)
+                if (sink == target || source == target)
                     continue;
 
-                auto copy = this->adjacency_matrix;
+                copy = this->adjacency_matrix;
 
-                unsigned int result = calculator.SolveFlowBetweenness(
-                    copy,
-                    source, 
-                    sink,
-                    target
-                );
+                unsigned int partial_score = calculator.SolveFlowMax(copy, source, sink, target);
 
-                betweenness_scores[target] += result;
+                betweenness_scores[target] += (max_score - partial_score);
             }
         }
     }
@@ -124,7 +121,7 @@ std::vector<unsigned int> CentralityCalculator::FlowCloseness()
     NonDominatedVectors<unsigned int> closeness_scores(this->adjacency_matrix.size());
     FlowMaxCalculator calculator;
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (size_t v = 0; v < this->adjacency_matrix.size(); v++)
     {
         for (size_t u = v + 1; u < this->adjacency_matrix.size(); u++)
@@ -167,7 +164,7 @@ std::vector<size_t> CentralityCalculator::SortByFlowCostScores(
         {
             if (left.flow_cost[i].second != right.flow_cost[i].second)
             {
-                return left.flow_cost[i].second < right.flow_cost[i].second;
+                return left.flow_cost[i].second > right.flow_cost[i].second;
             }
         }
 
@@ -209,4 +206,16 @@ std::vector<size_t> CentralityCalculator::SortByFlowScores(const std::vector<uns
     std::reverse(res.begin(), res.end());
 
     return res;
+}
+
+std::pair<unsigned long long, unsigned long long> CentralityCalculator::GetTimings()
+{
+    unsigned long long total_time = 0 ;
+
+    for (const auto & e : this->timings)
+    {
+        total_time += e.count();
+    }
+
+    return std::make_pair(total_time, this->vector_operation_timings);
 }
